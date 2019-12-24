@@ -52,8 +52,18 @@ A DS1302 based real-time clock module. Uses CR2032 lithium battery to store the 
 ![alt text](https://gsm-komplekt.ua/57723-large_default/57723.jpg)
 - voltage 3.3V
 - 31 bytes of battery-backed RAM
+- 32kHZ buit-in crystal
 - stores: seconds, minutes, hours, date, day of the week, year
 
 ## How it works
-![Alt text](scheme.jpg?raw=true "Title")
+##### Connection scheme
+![Alt text](scheme.jpg?raw=true "Scheme")
+#### Reading the data
+DHT22 is connected with one wire connection, so it uses signals of different time to distinguish the data, so it needs to work with microsecond delays(there is us_timing.h library for this). It sends 4 bytes of data and one checksum byte.
+BMP180 is connected with I2C interface. At first, the data is received uncompensated, then it compensates and we recieve floating point type temperature value and integer type pressure.
+There are libraries provided(dhtxx.h, bmp180.h) for each of the sensors(dht22, bmp180). Using them the data is read, but first the program checks whether there are some errors. If so, the coresponding error message is displayed on LCD and on the server. 
+
+Also there is a library(DS1302.h) for RTC module which is storing the hour and the date even when STM is unpowered. This is provided by CR2032 lithium battery which gives the low power to store the data. When the time and date are set, the data is written in registers of DS1302, then using built in crystal RTC changes the time and the date.
+#### Displaying the data
+
 
