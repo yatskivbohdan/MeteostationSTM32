@@ -1,7 +1,8 @@
 # General
 This is a course project for Principles of Computer Organization course at UCU, Lviv.
 
-Authors [Bohdan Yatskiv](https://github.com/yatskivbohdan) and [Volodymyr Lesyk](https://github.com/EntityFile)
+Authors:
+[Bohdan Yatskiv](https://github.com/yatskivbohdan) and [Volodymyr Lesyk](https://github.com/EntityFile)
 # Meteostation
 A simple meteostation based on the STMF411E-Discovery board. It uses temperature, pressure and humidity sensors to read the data. Information is displayed on LCD display and server.
 
