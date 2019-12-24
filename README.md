@@ -1,5 +1,8 @@
-# Meteostation
+# General
+This is a course project for Principles of Computer Organization course at UCU, Lviv.
 
+Authors [Bohdan Yatskiv](https://github.com/yatskivbohdan) and [Volodymyr Lesyk](https://github.com/EntityFile)
+# Meteostation
 A simple meteostation based on the STMF411E-Discovery board. It uses temperature, pressure and humidity sensors to read the data. Information is displayed on LCD display and server.
 
 ## What is used
@@ -80,5 +83,6 @@ The main part of work with reading and displaying data is done, but there are st
 ### What should be done
 - reading real time clock data is not working yet(will be fixed soon)
 - the data should be stored to display changing trend for some periods of time
+- a larger display could be used
 - web server now is extremely primitive and needs new functions, such setting the date and displaying data changes
 - some power modes could be designed
