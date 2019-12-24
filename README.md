@@ -58,12 +58,27 @@ A DS1302 based real-time clock module. Uses CR2032 lithium battery to store the 
 ## How it works
 ##### Connection scheme
 ![Alt text](scheme.jpg?raw=true "Scheme")
-#### Reading the data
-DHT22 is connected with one wire connection, so it uses signals of different time to distinguish the data, so it needs to work with microsecond delays(there is us_timing.h library for this). It sends 4 bytes of data and one checksum byte.
-BMP180 is connected with I2C interface. At first, the data is received uncompensated, then it compensates and we recieve floating point type temperature value and integer type pressure.
-There are libraries provided(dhtxx.h, bmp180.h) for each of the sensors(dht22, bmp180). Using them the data is read, but first the program checks whether there are some errors. If so, the coresponding error message is displayed on LCD and on the server. 
+### Reading the data
+**DHT22** is connected with one wire connection, so it uses signals of different time to distinguish the data, so it needs to work with microsecond delays(there is **us_timing.h** library for this). It sends 4 bytes of data and one checksum byte.
 
-Also there is a library(DS1302.h) for RTC module which is storing the hour and the date even when STM is unpowered. This is provided by CR2032 lithium battery which gives the low power to store the data. When the time and date are set, the data is written in registers of DS1302, then using built in crystal RTC changes the time and the date.
-#### Displaying the data
+**BMP180** is connected with **I2C** interface. At first, the data is received uncompensated, then it compensates and we recieve floating point type temperature value and integer type pressure.
+There are libraries provided(**dhtxx.h, bmp180.h**) for each of the sensors(dht22, bmp180). Using them the data is read, but first the program checks whether there are some errors. If so, the coresponding error message is displayed on LCD and on the server. 
 
-
+Also there is a library(**DS1302.h**) for **RTC** module which is storing the hour and the date even when STM is unpowered. This is provided by CR2032 lithium battery which gives the low power to store the data. When the time and date are set, the data is written in registers of **DS1302**, then using built-in crystal, RTC changes the time and the date.
+### Displaying the data
+#### LCD display 
+When the data is read, it is displayed on **LCD 1602** display. It uses PCF8574 chip to convert to **I2C**. A simple library i2c-lcd.h from here(https://controllerstech.com/i2c-lcd-in-stm32/) was taken and modified a bit. As there is only two rows on display the data is shown one by one for 5 seconds each: first time and date, then hygrometer data and then data from barometer.
+#### Server
+Using NodeMCU and **esp8266** chip on it the data is transmitted to the server. It uses Arduino code, so the source code could be find in following folder. At first the data is transmitted by **UART** from the STM to NodeMCU. However, as it is impossible to transmit floating point numbers via UART, the data is refactored and send by parts. Also each data part is send two times and NodeMCU checks if they are the same to avoid some errors.
+## Our progress
+The main part of work with reading and displaying data is done, but there are still some things to do.
+### What is done
+- reading the data from dht and bmp
+- displaying the data on display
+- refactoring ang optimizing data
+- sending data to local web server
+### What should be done
+- reading real time clock data is not working yet(will be fixed soon)
+- the data should be stored to display changing trend for some periods of time
+- web server now is extremely primitive and needs new functions, such setting the date and displaying data changes
+- some power modes could be designed
