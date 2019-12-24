@@ -1,4 +1,4 @@
-# # Meteostation
+# Meteostation
 
 A simple meteostation based on the STMF411E-Discovery board. It uses temperature, pressure and humidity sensors to read the data. Information is displayed on LCD display and server.
 
