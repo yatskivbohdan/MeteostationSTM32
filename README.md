@@ -2,7 +2,7 @@
 
 A simple meteostation based on the STMF411E-Discovery board. It uses temperature, pressure and humidity sensors to read the data. Information is displayed on LCD display and server.
 
-## What is inside
+## What is used
 #### STM32F411E-DISCOVERY
 The project is based on STM32F411E-DISCOVERY demoboard with a STM32F411VETx microcontroller on it.
 
