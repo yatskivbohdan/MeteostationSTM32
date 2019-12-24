@@ -55,5 +55,5 @@ A DS1302 based real-time clock module. Uses CR2032 lithium battery to store the 
 - stores: seconds, minutes, hours, date, day of the week, year
 
 ## How it works
-
+![Alt text](scheme.jpg?raw=true "Title")
 
