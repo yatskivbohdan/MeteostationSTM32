@@ -133,6 +133,7 @@ void WriteBMPData(void)
 	int temp_to_transmit = bmp.data.temp*10;
 	TransmitOneValue(4, temp_to_transmit/10, temp_to_transmit/10);
 	TransmitOneValue(5, abs(temp_to_transmit%10), abs(temp_to_transmit%10));
+	// Bug fix needed
 	TransmitOneValue(6, bmp.data.press/1000, bmp.data.press/1000);
 	TransmitOneValue(7, bmp.data.press/10 - (int)(bmp.data.press/1000)*100, bmp.data.press/10 - (int)(bmp.data.press/1000)*100);
 	TransmitOneValue(8, bmp.data.press - (int)(bmp.data.press/10)*10, bmp.data.press - (int)(bmp.data.press/10)*10);
