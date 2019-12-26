@@ -60,6 +60,12 @@ A DS1302 based real-time clock module. Uses CR2032 lithium battery to store the 
 - stores: seconds, minutes, hours, date, day of the week, year
 
 ## How it works
+### Used libraries
+-bmp.h(https://gist.github.com/ggirjau/369d1520a21c7cf41413b00352446d61)
+
+-dhtxx.h(https://indrekis2.blogspot.com/2017/02/dht11-dht22.html)
+
+-i2c-lcd.h(https://controllerstech.com/i2c-lcd-in-stm32/)
 ##### Connection scheme
 ![Alt text](scheme.jpg?raw=true "Scheme")
 ### Reading the data
