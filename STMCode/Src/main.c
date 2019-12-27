@@ -67,6 +67,8 @@ bmp_t bmp;
 
 
 
+int connected = 0;
+
 
 /* USER CODE END PV */
 
@@ -108,10 +110,25 @@ void TransmitOneValue(int num, int value, int check)
 	HAL_UART_Transmit(&huart2, buffer, sizeof(buffer), HAL_MAX_DELAY);
 }
 
-void DHTError(char * str)
+void Error(char * str)
 {
 	lcd_clear();
 	lcd_display_first_row(str);
+
+}
+
+void espDataError(int check){
+	switch(check) {
+		case -1:
+			Error("Connection error!");
+			break;
+		case -2:
+			Error("Time data error!");
+			break;
+		case -3:
+			Error("Date data error!");
+			break;
+	}
 }
 
 void WriteBMPData(void)
@@ -120,20 +137,20 @@ void WriteBMPData(void)
 	bmp.data.temp = get_temp (&bmp);
 	bmp.uncomp.press = get_up (bmp.oss);
 	bmp.data.press = get_pressure (bmp);
-		//bmp.data.altitude = get_altitude (&bmp);
+	if (bmp.err != NO_ERR){
+		Error("BMP ERROR");
+		return;
+	}
 	char temp[30];
 	char press[30];
-	char rofl[16];
 	sprintf(temp, "Temp: %2.1f C", bmp.data.temp);
 	sprintf(press, "Press: %6d Pa", bmp.data.press);
-	sprintf(rofl, "%d", bmp.data.press);
 	lcd_clear();
 	lcd_display_first_row(temp);
-	lcd_display_second_row(rofl);
+	lcd_display_second_row(press);
 	int temp_to_transmit = bmp.data.temp*10;
 	TransmitOneValue(4, temp_to_transmit/10, temp_to_transmit/10);
 	TransmitOneValue(5, abs(temp_to_transmit%10), abs(temp_to_transmit%10));
-	// Bug fix needed
 	TransmitOneValue(6, bmp.data.press/1000, bmp.data.press/1000);
 	TransmitOneValue(7, bmp.data.press/10 - (int)(bmp.data.press/1000)*100, bmp.data.press/10 - (int)(bmp.data.press/1000)*100);
 	TransmitOneValue(8, bmp.data.press - (int)(bmp.data.press/10)*10, bmp.data.press - (int)(bmp.data.press/10)*10);
@@ -141,23 +158,59 @@ void WriteBMPData(void)
 
 }
 
-
-
-void get_time(void)
-{
-	uint8_t time[8];
-	uint8_t buf [8] = {0, 0x13, 12, 23, 21, 1, 0, 0};
-	DS1302_WriteTimeBurst(buf);
-	char toDisplay[8];
-	char toDisplay2[10];
-	DS1302_ReadTimeBurst(time);
-	sprintf(toDisplay,"%02d:%02d:%02d", time[4], time[5], time[6]);
-	sprintf(toDisplay2,"%02d-%02d-%2d",time[3], time[2], 2000 + time[1]);
-	lcd_clear();
-	lcd_display_first_row(toDisplay);
-	lcd_display_second_row(toDisplay2);
+char* weekday(uint8_t id){
+	switch (id){
+	case 0:
+		return "Sun";
+	case 1:
+		return "Mon";
+	case 2:
+		return "Tue";
+	case 3:
+		return "Wed";
+	case 4:
+		return "Thu";
+	case 5:
+		return "Fri";
+	case 6:
+		return "Sat";
+	}
 
 }
+
+
+int get_ip_and_time(){
+	uint8_t info[12];
+	HAL_UART_Receive(&huart2, info, 12, HAL_MAX_DELAY);
+	char ip[16];
+	char time[16];
+	char date[16];
+	if (info[1] != 192){
+		return -1;
+	}
+	if ((info[5] >= 24) || (info[6] >= 60) || (info[7] >= 60)){
+		return -2;
+	}
+	if ((info[8] >= 100)|| (info[9] >= 13) || (info[10] >= 32)){
+		return -3;
+	}
+	sprintf(ip,"%d:%d:%d:%d", info[1], info[2], info[3], info[4]);
+	sprintf(time, "%02d:%02d:%02d", info[5], info[6], info[7]);
+	sprintf(date, "%s, %02d-%02d-%04d", weekday(info[11]), info[10], info[9],  2000 + info[8]);
+	lcd_clear();
+	lcd_display_first_row("Connected to:");
+	lcd_display_second_row(ip);
+	HAL_Delay(3000);
+	lcd_clear();
+	lcd_display_first_row(time);
+	lcd_display_second_row(date);
+	HAL_Delay(3000);
+	return 0;
+
+}
+
+
+
 
 
 /* USER CODE END 0 */
@@ -199,7 +252,7 @@ int main(void)
   MX_USB_HOST_Init();
   MX_I2C3_Init();
   MX_TIM10_Init();
-  MX_RTC_Init();
+
   /* USER CODE BEGIN 2 */
   bmp_init(&bmp);
   lcd_init();
@@ -221,7 +274,17 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    get_time();
+    /*Reading bmp data*/
+    if (connected == 0){
+    	connected = 1;
+    	lcd_clear();
+    	lcd_display_first_row("Connecting...");
+    	HAL_Delay(4000);
+    }
+    int check = get_ip_and_time();
+    if (check != 0){
+    	espDataError(check);
+    }
     HAL_Delay(2000);
 	/*Getting hygrometer data*/
 	res = read_raw_DHTxx(&hr11_1, 1);
@@ -231,11 +294,11 @@ int main(void)
 		 }
 		 if (res==DHTXX_CS_ERROR)
 		 {
-			 DHTError("DHT CHEKSUM ERROR");
+			 Error("DHT CHEKSUM ERROR");
 		 }
 		 if (res==DHTXX_NO_CONN)
 		 {
-			 DHTError("DHT NO CONN");
+			Error("DHT NO CONN");
 		 }
 		 //HAL_Delay(2000);
 
