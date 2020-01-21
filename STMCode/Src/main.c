@@ -64,6 +64,8 @@ int DHT_temp, DHT_press;
 
 bmp_t bmp;
 
+TIME time;
+
 
 
 
@@ -85,8 +87,8 @@ void MX_USB_HOST_Process(void);
 void WriteDHTData(void)
 {
 	/* Reading the data */
-	char humidity[30];
-	char temp_dht[30];
+	char humidity[16];
+	char temp_dht[16];
 	DHT_temp = get_temperature_DHTxx(&hr11_1);
 	DHT_press = get_humidity_DHTxx(&hr11_1);
 	/* Sending data to display */
@@ -141,8 +143,8 @@ void WriteBMPData(void)
 		Error("BMP ERROR");
 		return;
 	}
-	char temp[30];
-	char press[30];
+	char temp[20];
+	char press[20];
 	sprintf(temp, "Temp: %2.1f C", bmp.data.temp);
 	sprintf(press, "Press: %6d Pa", bmp.data.press);
 	lcd_clear();
@@ -183,32 +185,49 @@ int get_ip_and_time(){
 	uint8_t info[12];
 	HAL_UART_Receive(&huart2, info, 12, HAL_MAX_DELAY);
 	char ip[16];
-	char time[16];
-	char date[16];
 	if (info[1] != 192){
 		return -1;
 	}
-	if ((info[5] >= 24) || (info[6] >= 60) || (info[7] >= 60)){
-		return -2;
-	}
-	if ((info[8] >= 100)|| (info[9] >= 13) || (info[10] >= 32)){
-		return -3;
-	}
+	//if ((info[5] >= 24) || (info[6] >= 60) || (info[7] >= 60)){
+	//	return -2;
+	//}
+	//if ((info[8] >= 100)|| (info[9] >= 13) || (info[10] >= 32)){
+	//	return -3;
+	//}
 	sprintf(ip,"%d:%d:%d:%d", info[1], info[2], info[3], info[4]);
-	sprintf(time, "%02d:%02d:%02d", info[5], info[6], info[7]);
-	sprintf(date, "%s, %02d-%02d-%04d", weekday(info[11]), info[10], info[9],  2000 + info[8]);
+	//sprintf(time, "%02d:%02d:%02d", info[5], info[6], info[7]);
+	//sprintf(date, "%s, %02d-%02d-%04d", weekday(info[11]), info[10], info[9],  2000 + info[8]);
 	lcd_clear();
 	lcd_display_first_row("Connected to:");
 	lcd_display_second_row(ip);
 	HAL_Delay(3000);
 	lcd_clear();
-	lcd_display_first_row(time);
-	lcd_display_second_row(date);
-	HAL_Delay(3000);
 	return 0;
 
 }
 
+void displayTime(){
+	getTime(&time);
+	char timestr[16];
+	char date[16];
+	sprintf(timestr, "%02d:%02d:%02d", time.hours, time.minutes, time.seconds);
+	sprintf(date, "%s, %02d-%02d-%04d", weekday(time.dayofweek), time.day, time.month,  2000 + time.year);
+	lcd_display_first_row(timestr);
+	lcd_display_second_row(date);
+	HAL_Delay(1000);
+
+}
+
+void TransmitTime(){
+	TransmitOneValue(9, time.hours, time.hours);
+	TransmitOneValue(10, time.minutes, time.minutes);
+	TransmitOneValue(11, time.seconds, time.seconds);
+	TransmitOneValue(12, time.dayofweek, time.dayofweek);
+	TransmitOneValue(13, time.day, time.day);
+	TransmitOneValue(14, time.month, time.month);
+	TransmitOneValue(15, time.year, time.year);
+
+}
 
 
 
@@ -245,14 +264,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-  MX_I2S2_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_USART2_UART_Init();
   MX_USB_HOST_Init();
   MX_I2C3_Init();
   MX_TIM10_Init();
-
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
   bmp_init(&bmp);
   lcd_init();
@@ -261,9 +279,8 @@ int main(void)
   DS1302_Init();
   DS1302_ClockStart();
   TIM10_reinit();
+  //setTime(00, 33, 20, 1, 20, 1, 20);
 
-  //set_time(19, 12, 23, 21, 56, 7);
-  //set_time(0x16, 0x12, 0x13, 0x06, 0x03, 0x10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -274,18 +291,24 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    /*Reading bmp data*/
+    /*Receiving server ip */
     if (connected == 0){
     	connected = 1;
     	lcd_clear();
     	lcd_display_first_row("Connecting...");
     	HAL_Delay(4000);
+
     }
     int check = get_ip_and_time();
     if (check != 0){
     	espDataError(check);
+    	HAL_Delay(2000);
     }
-    HAL_Delay(2000);
+    TransmitTime();
+    int start = HAL_GetTick();
+    while (HAL_GetTick() - start < 5000){
+    	displayTime();
+    }
 	/*Getting hygrometer data*/
 	res = read_raw_DHTxx(&hr11_1, 1);
 		 if (res==DHTXX_OK)
@@ -304,7 +327,6 @@ int main(void)
 
 	/*Getting barometer data*/
 	WriteBMPData();
-
 	/* Some delay */
 	HAL_Delay(2000);
   }
