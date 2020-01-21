@@ -30,9 +30,40 @@ void update_data(void){
    temp1 = String(data[0]) + "." + String(data[1]);
    humidity = String(data[2]) + "." + String(data[3]);
    temp2 = String(data[4]) +  "." + String(data[5]);
-   pressure = String(data[6]) + String(data[7]) + String(data[8]);
-   ttime = String(data[9]) + ":" + String(data[10]) + ":" + String(data[11])+" ";
-   date = weekday(data[12]) + ", " + String(data[13]) + "-" + String(data[14]) + "-" + String(2000+ data[15]);
+   if (data[7]<=9) 
+      pressure = String(data[6]) + "0"+String(data[7]) + String(data[8]);
+   else
+        pressure = String(data[6]) + String(data[7]) + String(data[8]);
+   String minutes;
+   String seconds;
+   String hours;
+   String day;
+   String month;
+   if (data[9]<=9)
+      hours = "0" + String(data[9]);
+   else
+      hours = String(data[9]);
+   if (data[10]<=9)
+      minutes = "0" + String(data[10]);
+   else
+      minutes = String(data[10]);
+   if (data[11]<=9)
+      seconds = "0" + String(data[11]);
+   else
+      seconds = String(data[11]);
+   if (data[13]<=9)
+      day = "0" + String(data[13]);
+   else
+      day = String(data[13]);
+   if (data[14]<=9)
+      month = "0" + String(data[14]);
+   else
+      month = String(data[14]);
+
+    
+   
+   ttime = hours + ":" + minutes + ":" + seconds;
+   date = weekday(data[12]) + ", " + day + "-" + month + "-" + String(2000+ data[15]);
    
 }
 
@@ -150,19 +181,19 @@ void setup(void){
     page = "<!DOCTYPE html><html><head> <link rel=\"stylesheet\" href=\"https://use.fontawesome.com/releases/v5.7.2/css/all.css\" integrity=\"sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr\" crossorigin=\"anonymous\"> \r\n";
     page += "<script src=\"https://code.highcharts.com/highcharts.js\"></script>";
     page += "<style>\r\n";
-    page += "body {background-image: url(\"https://mocah.org/uploads/posts/124344-miui-8-weather-background-minimal-hd.png\");background-repeat: no-repeat; background-attachment: fixed; background-position: center;}\r\n";
-    page += "html { font-family: Arial; display: inline-block; margin: 0px auto; text-align: center;}\r\n";
-    page += "h2 { font-size: 3.0rem; } p { font-size: 3.0rem; }.units { font-size: 1.6rem; }.dht-labels{font-size: 1.5rem;vertical-align:middle;padding-bottom: 15px;}\r\n";
+    page += "body {background-image: url(\"http://i.imgur.com/RnwnIzX.gif\");background-repeat: no-repeat; background-attachment: fixed; background-position: center;}\r\n";
+    page += "html { font-family: Arial Black; display: inline-block; margin: 0px auto; text-align: center;}\r\n";
+    page += "h2 { font-size: 3.0rem; } p { font-size: 3.0rem; }.units { font-size: 1.6rem; color:#ffffff;}.dht-labels{font-size: 1.5rem;vertical-align:middle;padding-bottom: 15px; color:#ffffff;}\r\n";
     page += "</style></head>\r\n";
-    page += "<body><h1>Meteostation server</h1>";
-    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;\"></i> <span class=\"dht-labels\">Temperature1</span> <span id=\"temp1\"></span><sup class=\"units\">&deg;C</sup></p>";
-    page += "<p><i class=\"fas fa-tint\" style=\"color:#00008b;\"></i> <span class=\"dht-labels\">Humidity</span> <span id=\"humidity\"></span><sup class=\"units\">%</sup></p>";
-    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;\"></i> <span class=\"dht-labels\">Temperature2</span> <span id=\"temp2\"></span><sup class=\"units\">&deg;C</sup></p>";
-    page += "<p><i class=\"fas fa-tachometer-alt\" style=\"color:#00008b;\"></i> <span class=\"dht-labels\">Pressure</span> <span id=\"pressure\"></span><sup class=\"units\">Pa</sup></p>";
-    page += "<p><i class=\"fas fa-clock\" style=\"font-size:1.0rem;color:#e3a8c7;\"></i> <span style=\"font-size:1.0rem;\">Last changed</span> <span id=\"ttime\" style=\"font-size:1.0rem;\"></span>";
-    page += "<i class=\"fas fa-calendar-alt\" style=\"font-size:1.0rem;color:#f7dc68;\"></i> <span style=\"font-size:1.0rem;\"></span> <span id=\"date\" style=\"font-size:1.0rem;\"></span></P>";
+    page += "<body><h1 style=\"color:white;\">Meteostation server</h1>";
+    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#ffffff;\"></i> <span class=\"dht-labels\">Temperature1</span> <span id=\"temp1\" style=\"color:white;\"></span><sup class=\"units\">&deg;C</sup></p>";
+    page += "<p><i class=\"fas fa-tint\" style=\"color:#ffffff;\"></i> <span class=\"dht-labels\">Humidity</span> <span id=\"humidity\" style=\"color:white;\"></span><sup class=\"units\">%</sup></p>";
+    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#ffffff;\"></i> <span class=\"dht-labels\">Temperature2</span> <span id=\"temp2\" style=\"color:white;\"></span><sup class=\"units\">&deg;C</sup></p>";
+    page += "<p><i class=\"fas fa-tachometer-alt\" style=\"color:#ffffff;\"></i> <span class=\"dht-labels\">Pressure</span> <span id=\"pressure\" style=\"color:white;\"></span><sup class=\"units\">Pa</sup></p>";
+    page += "<p><i class=\"fas fa-clock\" style=\"font-size:1.0rem;color:#ffffff;\"></i> <span style=\"font-size:1.0rem; color:white\">Last changed</span> <span id=\"ttime\" style=\"font-size:1.0rem; color:white\"></span>";
+    page += "<span style=\"font-size:1.0rem; color:white\"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><i class=\"fas fa-calendar-alt\" style=\"font-size:1.0rem;color:#ffffff;\"></i> <span style=\"font-size:1.0rem; color:white\"></span> <span id=\"date\" style=\"font-size:1.0rem; color:white\"></span></P>";
 
-    page += "<h2>Changes history</h2>\r\n";
+    page += "<h2 style=\"color:white;\">Changes history</h2>\r\n";
     page += "<div id=\"chart-temperature1\" class=\"container\"></div>\r\n";
     page += "<div id=\"chart-humidity\" class=\"container\"></div>";
     page += "<div id=\"chart-temperature2\" class=\"container\"></div>";
@@ -290,7 +321,7 @@ void setup(void){
     page += "plotOptions: {\r\n";
     page += "line: { animation: false,\r\n";
     page += "dataLabels: { enabled: true }\r\n";
-    page += "},\r\n";
+    page += "},\r\n"; 
     page += "series: { color: \"#e3a8c7\" }\r\n";
     page += "},xAxis: { type: \"datetime\",\r\n";
     page += "dateTimeLabelFormats: { second: \"%H:%M:%S\" }\r\n";
