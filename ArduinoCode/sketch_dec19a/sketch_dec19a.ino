@@ -4,103 +4,63 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
+
 // Replace with your network credentials
 const char* ssid = "NodeMCU";
 const char* password = "11111111";
  
 ESP8266WebServer server(80);   //instantiate server at port 80 (http port)
- 
-String Website, temp1, temp2, humidity, pressure, Final;
-int data[9] = {0};
-String Default = "<h1>Meteostation server</h1> <head> <meta http-equiv= \"refresh\" content=\"1\"> </head>";
-//String datestr;
-int year, month, day;
-String last_temp, last_humidity, last_temp2, last_press;  
 
-const long utcOffsetInSeconds = 7200;
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP,utcOffsetInSeconds);
+ 
+String page, temp1, temp2, humidity, pressure, ttime, date;
+int data[16] = {0}; 
 
 void update_data(void){
-   bool changed = false;
    while (Serial.available()){
-    changed = false;
     int num = (int)Serial.read();
     int value = (int)Serial.read();
     int check = (int)Serial.read();
     if(value == check && value >= 0){
       if (data[num] != value){
       data[num] = value;
-      changed = true;
       }
     }
    }
-    if (changed){
-      Website = Default;
-      temp1 =" " + String(data[0]) + "." + String(data[1]) + "C ";
-      humidity =" " + String(data[2]) + "." + String(data[3]) + "% ";
-      temp2 = " " + String(data[4]) + "." + String(data[5]) + "C ";
-      pressure = " " + String(data[6])+String(data[7])+String(data[8]) + "Pa";
-      Website += "<p>Temperature:" + temp1 + " previous was:" + last_temp + "</p>";
-      Website += "<p>Humidity:" + humidity + " previous was:" + last_humidity + "</p>";
-       Website += "<p>Temperature2:" + temp2 + " previous was:" + last_temp2 + "</p>";
-      Website += "<p>Pressure:" + pressure + " previous was:" + last_press + "</p>";
-      if (temp1 != last_temp){
-        last_temp = temp1;
-      }
-     if (temp2 != last_temp2){
-      last_temp2 = temp2;
-      }
-    if (humidity != last_humidity){
-      last_humidity = humidity;
-    }
-    if (pressure != last_press){
-      last_press = pressure;
-    }
-      
-    
-    }
-    
-    Final = Website + "<p>"+ timeClient.getFormattedTime() + "</p>" + "<p>" + day + "-" + month + "-" + year + "</p>";
-
-     
+  
+   temp1 = String(data[0]) + "." + String(data[1]);
+   humidity = String(data[2]) + "." + String(data[3]);
+   temp2 = String(data[4]) +  "." + String(data[5]);
+   pressure = String(data[6]) + String(data[7]) + String(data[8]);
+   ttime = String(data[9]) + ":" + String(data[10]) + ":" + String(data[11])+" ";
+   date = weekday(data[12]) + ", " + String(data[13]) + "-" + String(data[14]) + "-" + String(2000+ data[15]);
+   
 }
 
-void send_time(){
-    String timestr = timeClient.getFormattedTime();
-    timestr += ":";
-    int hours, mins, sec;  
-  // ipadress += ".";
-    String sended = "";
-    int int_sended;
-    int i = 0;
-    int id_time = 0;
-  while (timestr[i]) {
-    if (timestr[i] != ':'){
-        sended += timestr[i];
-    }else{
-      int_sended = sended.toInt();
-      switch(id_time){
-        case 0: hours = int_sended; break;
-        case 1: mins = int_sended; break;
-        case 2: sec = int_sended; break;
-        } 
-      sended = ""; 
-      ++id_time;
-    }
-    ++i;
+String weekday(int number){
+  switch (number){
+    case 0:
+        return "Sunday";
+    case 1:
+        return "Monday";
+    case 2:
+        return "Tuesday";
+    case 3:
+        return "Wednesday";
+    case 4:
+        return "Thursday";
+    case 5:
+        return "Friday";
+    case 6:
+        return "Saturday";
+    default:
+        return "Error";
   }
-  uint8_t buf[3] = {(uint8_t)hours, (uint8_t)mins, (uint8_t)sec};
-  Serial.write(buf, sizeof(buf));
-  delay(100);
-    
 }
-
-
-  void send_ip_and_time(void){
+void send_ip(void){
       WiFi.mode(WIFI_STA);
       String ipadress = WiFi.localIP().toString();
-      int ip_first, ip_second, ip_third, ip_fourth;  
+      int ip_first, ip_second, ip_third, ip_fourth;
+        
       ipadress += ".";
       String sended = "";
       int int_sended;
@@ -122,66 +82,15 @@ void send_time(){
         }
         ++i;
       }
-      String timestr = timeClient.getFormattedTime();
-    timestr += ":";
-    int hours, mins, sec;  
-  // ipadress += ".";
-    sended = "";
-    i = 0;
-    int id_time = 0;
-  while (timestr[i]) {
-    if (timestr[i] != ':'){
-        sended += timestr[i];
-    }else{
-      int_sended = sended.toInt();
-      switch(id_time){
-        case 0: hours = int_sended; break;
-        case 1: mins = int_sended; break;
-        case 2: sec = int_sended; break;
-        } 
-      sended = ""; 
-      ++id_time;
-    }
-    ++i;
-  }
-  String formattedDate = timeClient.getFormattedDate();
-  int splitT = formattedDate.indexOf("T");
-  String datestr = formattedDate.substring(0, splitT);
-    datestr += "-";
-   
-  // ipadress += ".";
-    sended = "";
-    i = 0;
-    int id_date = 0;
-  while (datestr[i]) {
-    if (datestr[i] != '-'){
-        sended += datestr[i];
-    }else{
-      int_sended = sended.toInt();
-      switch(id_date){
-        case 0: year = int_sended; break;
-        case 1: month = int_sended; break;
-        case 2: day = int_sended; break;
-        } 
-      sended = ""; 
-      ++id_date;
-    }
-    ++i;
-  }
-       uint8_t buff[12] = {(uint8_t)ip_first, (uint8_t)ip_second, (uint8_t)ip_third, (uint8_t)ip_fourth, (uint8_t)hours, (uint8_t)mins, (uint8_t)sec, (uint8_t)(year%100), (uint8_t)month, (uint8_t)day, (uint8_t)timeClient.getDay()};
-     
-        
-       Serial.write(buff, sizeof(buff));
+      uint8_t buff[12] = {(uint8_t)ip_first, (uint8_t)ip_second, (uint8_t)ip_third, (uint8_t)ip_fourth};
+      Serial.write(buff, sizeof(buff));
 
        
-}  
+}
+
+
 
 void setup(void){
-  //the HTML of the web page
-  Website=Default;
-  //page = "<h1>Simple NodeMCU Web Server</h1><p><a href=\"LEDOn\"><button>ON</button></a>&nbsp;<a href=\"LEDOff\"><button>OFF</button></a></p>";
-  
-   
   delay(1000);
   Serial.begin(115200);
   WiFi.begin(ssid, password); //begin WiFi connection
@@ -192,25 +101,278 @@ void setup(void){
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  
+  server.on("/temp1", []() {
+    server.send(200, "text/html", temp1);
+  });
+  
+   server.on("/humidity", []() {
+    server.send(200, "text/html", humidity);
+  });
+  
+   server.on("/temp2", []() {
+    server.send(200, "text/html", temp2);
+  });
+  
+   server.on("/pressure", []() {
+    server.send(200, "text/html", pressure);
+  });
+  
+   server.on("/ttime", []() {
+    server.send(200, "text/html", ttime);
+  
+  });
+  server.on("/date", []() {
+    server.send(200, "text/html", date);
+  
+  });
 
+  server.on("/chart-temperature1", []() {
+    if (data[0] != 0)
+      server.send(200, "text/html", String(data[0]) + "." + String(data[1]));
+  });
+
+  server.on("/chart-humidity", []() {
+    if (data[2] != 0)
+    server.send(200, "text/html", String(data[2]) + "." + String(data[3]));
+  });
+
+  server.on("/chart-temperature2", []() {
+    if (data[4] != 0)
+    server.send(200, "text/html", String(data[4]) + "." + String(data[5]));
+  });
+
+   server.on("/chart-pressure", []() {
+    if (data[6] != 0)
+    server.send(200, "text/html", String(data[6]) + String(data[7])+ String(data[8]));
+  });
   server.on("/", [](){
-    server.send(200, "text/html", Final);
+    page = "<!DOCTYPE html><html><head> <link rel=\"stylesheet\" href=\"https://use.fontawesome.com/releases/v5.7.2/css/all.css\" integrity=\"sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr\" crossorigin=\"anonymous\"> \r\n";
+    page += "<script src=\"https://code.highcharts.com/highcharts.js\"></script>";
+    page += "<style>\r\n";
+    page += "body {background-image: url(\"https://mocah.org/uploads/posts/124344-miui-8-weather-background-minimal-hd.png\");background-repeat: no-repeat; background-attachment: fixed; background-position: center;}\r\n";
+    page += "html { font-family: Arial; display: inline-block; margin: 0px auto; text-align: center;}\r\n";
+    page += "h2 { font-size: 3.0rem; } p { font-size: 3.0rem; }.units { font-size: 1.6rem; }.dht-labels{font-size: 1.5rem;vertical-align:middle;padding-bottom: 15px;}\r\n";
+    page += "</style></head>\r\n";
+    page += "<body><h1>Meteostation server</h1>";
+    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;\"></i> <span class=\"dht-labels\">Temperature1</span> <span id=\"temp1\"></span><sup class=\"units\">&deg;C</sup></p>";
+    page += "<p><i class=\"fas fa-tint\" style=\"color:#00008b;\"></i> <span class=\"dht-labels\">Humidity</span> <span id=\"humidity\"></span><sup class=\"units\">%</sup></p>";
+    page += "<p><i class=\"fas fa-thermometer-half\" style=\"color:#059e8a;\"></i> <span class=\"dht-labels\">Temperature2</span> <span id=\"temp2\"></span><sup class=\"units\">&deg;C</sup></p>";
+    page += "<p><i class=\"fas fa-tachometer-alt\" style=\"color:#00008b;\"></i> <span class=\"dht-labels\">Pressure</span> <span id=\"pressure\"></span><sup class=\"units\">Pa</sup></p>";
+    page += "<p><i class=\"fas fa-clock\" style=\"font-size:1.0rem;color:#e3a8c7;\"></i> <span style=\"font-size:1.0rem;\">Last changed</span> <span id=\"ttime\" style=\"font-size:1.0rem;\"></span>";
+    page += "<i class=\"fas fa-calendar-alt\" style=\"font-size:1.0rem;color:#f7dc68;\"></i> <span style=\"font-size:1.0rem;\"></span> <span id=\"date\" style=\"font-size:1.0rem;\"></span></P>";
+
+    page += "<h2>Changes history</h2>\r\n";
+    page += "<div id=\"chart-temperature1\" class=\"container\"></div>\r\n";
+    page += "<div id=\"chart-humidity\" class=\"container\"></div>";
+    page += "<div id=\"chart-temperature2\" class=\"container\"></div>";
+    page += "<div id=\"chart-pressure\" class=\"container\"></div>";        
+    page += "</body><script>\r\n";
+    
+    page += "var x = setInterval(function() {loadData(\"temp1\",updateData1)}, 1000);\r\n";
+    page += "var y = setInterval(function() {loadData(\"humidity\",updateData2)}, 1000);\r\n";
+    page += "var z = setInterval(function() {loadData(\"temp2\",updateData3)}, 1000);\r\n";
+    page += "var a = setInterval(function() {loadData(\"pressure\",updateData4)}, 1000);\r\n";
+    page += "var b = setInterval(function() {loadData(\"ttime\",updateData5)}, 1000);\r\n";
+    page += "var c = setInterval(function() {loadData(\"date\",updateData6)}, 1000);\r\n";
+    page += "function loadData(url, callback){\r\n";
+    page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function(){\r\n";
+    page += " if(this.readyState == 4 && this.status == 200){\r\n";
+    page += " callback.apply(xhttp);\r\n";
+    page += " }\r\n";
+    page += "};\r\n";
+    page += "xhttp.open(\"GET\", url, true);\r\n";
+    page += "xhttp.send();\r\n";
+    page += "}\r\n";
+    page += "function updateData1(){\r\n";
+    page += " document.getElementById(\"temp1\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+     page += "function updateData2(){\r\n";
+    page += " document.getElementById(\"humidity\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+     page += "function updateData3(){\r\n";
+    page += " document.getElementById(\"temp2\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+    page += "function updateData4(){\r\n";
+    page += " document.getElementById(\"pressure\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+    page += "function updateData5(){\r\n";
+    page += " document.getElementById(\"ttime\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+    page += "function updateData6(){\r\n";
+    page += " document.getElementById(\"date\").innerHTML = this.responseText;\r\n";
+    page += "}\r\n";
+    
+    page += "var chartT = new Highcharts.Chart({\r\n";
+    page += "chart:{ renderTo : \"chart-temperature1\" },\r\n";
+    page += "title: { text: \"DHT22 Temperature\" },\r\n";
+    page += "series: [{\r\n";
+    page += "showInLegend: false,\r\n";
+    page += "data: []\r\n";
+    page += "}],\r\n";
+    page += "plotOptions: {\r\n";
+    page += "line: { animation: false,\r\n";
+    page += "dataLabels: { enabled: true }\r\n";
+    page += "},\r\n";
+    page += "series: { color: \"#059e8a\" }\r\n";
+    page += "},xAxis: { type: \"datetime\",\r\n";
+    page += "dateTimeLabelFormats: { second: \"%H:%M:%S\" }\r\n";
+    page += "},\r\n";
+    page += "yAxis: {\r\n";
+    page += "title: { text: \"Temperature (Celsius)\" }\r\n";
+    page += "},\r\n";
+    page += "credits: { enabled: false }\r\n";
+    page += "});\r\n";
+    
+    page += "setInterval(function ( ) {\r\n";
+    page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function() {\r\n";
+    page += "if (this.readyState == 4 && this.status == 200) {\r\n;";
+    page += "var x = (new Date()).getTime(),\r\n";
+    page += "y = parseFloat(this.responseText);\r\n";
+    page += "if(chartT.series[0].data.length > 40) {\r\n";
+    page += "chartT.series[0].addPoint([x, y], true, true, true);\r\n";
+    page += "} else {\r\n";
+    page += "chartT.series[0].addPoint([x, y], true, false, true);\r\n";
+    page += "}\r\n";
+    page += "}\r\n";
+    page += "};\r\n";
+    page += "xhttp.open(\"GET\", \"/chart-temperature1\", true);\r\n";
+    page += "xhttp.send();\r\n";
+    page += "}, 1000 ) ;\r\n";
+
+     page += "var chartH = new Highcharts.Chart({\r\n";
+    page += "chart:{ renderTo : \"chart-humidity\" },\r\n";
+    page += "title: { text: \"Humidity\" },\r\n";
+    page += "series: [{\r\n";
+    page += "showInLegend: false,\r\n";
+    page += "data: []\r\n";
+    page += "}],\r\n";
+    page += "plotOptions: {\r\n";
+    page += "line: { animation: false,\r\n";
+    page += "dataLabels: { enabled: true }\r\n";
+    page += "},\r\n";
+    page += "series: { color: \"#00008b\" }\r\n";
+    page += "},xAxis: { type: \"datetime\",\r\n";
+    page += "dateTimeLabelFormats: { second: \"%H:%M:%S\" }\r\n";
+    page += "},\r\n";
+    page += "yAxis: {\r\n";
+    page += "title: { text: \"Humidity (%))\" }\r\n";
+    page += "},\r\n";
+    page += "credits: { enabled: false }\r\n";
+    page += "});\r\n";
+    
+    page += "setInterval(function ( ) {\r\n";
+    page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function() {\r\n";
+    page += "if (this.readyState == 4 && this.status == 200) {\r\n;";
+    page += "var x = (new Date()).getTime(),\r\n";
+    page += "y = parseFloat(this.responseText);\r\n";
+    page += "if(chartH.series[0].data.length > 40) {\r\n";
+    page += "chartH.series[0].addPoint([x, y], true, true, true);\r\n";
+    page += "} else {\r\n";
+    page += "chartH.series[0].addPoint([x, y], true, false, true);\r\n";
+    page += "}\r\n";
+    page += "}\r\n";
+    page += "};\r\n";
+    page += "xhttp.open(\"GET\", \"/chart-humidity\", true);\r\n";
+    page += "xhttp.send();\r\n";
+    page += "}, 1000 ) ;\r\n";
+
+    page += "var chartT2 = new Highcharts.Chart({\r\n";
+    page += "chart:{ renderTo : \"chart-temperature2\" },\r\n";
+    page += "title: { text: \"BMP180 Temperature\" },\r\n";
+    page += "series: [{\r\n";
+    page += "showInLegend: false,\r\n";
+    page += "data: []\r\n";
+    page += "}],\r\n";
+    page += "plotOptions: {\r\n";
+    page += "line: { animation: false,\r\n";
+    page += "dataLabels: { enabled: true }\r\n";
+    page += "},\r\n";
+    page += "series: { color: \"#e3a8c7\" }\r\n";
+    page += "},xAxis: { type: \"datetime\",\r\n";
+    page += "dateTimeLabelFormats: { second: \"%H:%M:%S\" }\r\n";
+    page += "},\r\n";
+    page += "yAxis: {\r\n";
+    page += "title: { text: \"Temperature (Celsius)\" }\r\n";
+    page += "},\r\n";
+    page += "credits: { enabled: false }\r\n";
+    page += "});\r\n";
+    
+    page += "setInterval(function ( ) {\r\n";
+    page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function() {\r\n";
+    page += "if (this.readyState == 4 && this.status == 200) {\r\n;";
+    page += "var x = (new Date()).getTime(),\r\n";
+    page += "y = parseFloat(this.responseText);\r\n";
+    page += "if(chartT2.series[0].data.length > 40) {\r\n";
+    page += "chartT2.series[0].addPoint([x, y], true, true, true);\r\n";
+    page += "} else {\r\n";
+    page += "chartT2.series[0].addPoint([x, y], true, false, true);\r\n";
+    page += "}\r\n";
+    page += "}\r\n";
+    page += "};\r\n";
+    page += "xhttp.open(\"GET\", \"/chart-temperature2\", true);\r\n";
+    page += "xhttp.send();\r\n";
+    page += "}, 1000 ) ;\r\n";
+
+    page += "var chartP = new Highcharts.Chart({\r\n";
+    page += "chart:{ renderTo : \"chart-pressure\" },\r\n";
+    page += "title: { text: \"Pressure\" },\r\n";
+    page += "series: [{\r\n";
+    page += "showInLegend: false,\r\n";
+    page += "data: []\r\n";
+    page += "}],\r\n";
+    page += "plotOptions: {\r\n";
+    page += "line: { animation: false,\r\n";
+    page += "dataLabels: { enabled: true }\r\n";
+    page += "},\r\n";
+    page += "series: { color: \"#f7dc68\" }\r\n";
+    page += "},xAxis: { type: \"datetime\",\r\n";
+    page += "dateTimeLabelFormats: { second: \"%H:%M:%S\" }\r\n";
+    page += "},\r\n";
+    page += "yAxis: {\r\n";
+    page += "title: { text: \"Pressure (Pa)\" }\r\n";
+    page += "},\r\n";
+    page += "credits: { enabled: false }\r\n";
+    page += "});\r\n";
+    
+    page += "setInterval(function ( ) {\r\n";
+    page += "var xhttp = new XMLHttpRequest();\r\n";
+    page += "xhttp.onreadystatechange = function() {\r\n";
+    page += "if (this.readyState == 4 && this.status == 200) {\r\n;";
+    page += "var x = (new Date()).getTime(),\r\n";
+    page += "y = parseInt(this.responseText);\r\n";
+    page += "if(chartP.series[0].data.length > 40) {\r\n";
+    page += "chartP.series[0].addPoint([x, y], true, true, true);\r\n";
+    page += "} else {\r\n";
+    page += "chartP.series[0].addPoint([x, y], true, false, true);\r\n";
+    page += "}\r\n";
+    page += "}\r\n";
+    page += "};\r\n";
+    page += "xhttp.open(\"GET\", \"/chart-pressure\", true);\r\n";
+    page += "xhttp.send();\r\n";
+    page += "}, 1000 ) ;\r\n";
+
+    
+
+   
+    
+    
+    
+    page += "</script></html>\r\n";
+
+    server.send(200, "text/html", page);
   });
   server.begin();
-  timeClient.begin();
   Serial.println("Web server started!");
 }
  
 void loop(void){
-  timeClient.update();
-  //Serial.println(timeClient.getFormattedTime());
   server.handleClient();
-  send_ip_and_time();
+  send_ip();
   delay(100);
   update_data();
     
